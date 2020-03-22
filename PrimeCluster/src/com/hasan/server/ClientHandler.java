@@ -1,5 +1,7 @@
 package com.hasan.server;
 
+import com.hasan.Utils;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -38,7 +40,7 @@ public class ClientHandler implements Runnable{
     }
 
     @Override
-    public void run() {
+    public void run() { //Communicates with clients
         while (socket.isConnected()) {
             try {
                 String received = dis.readUTF();
@@ -47,6 +49,12 @@ public class ClientHandler implements Runnable{
                 System.out.println("Message from client " + getName());
                 System.out.println(received);
                 System.out.println("*************************************");
+                if(received.equals(Utils.READY_MSG)){ //checking if client is ready for prime number detection
+                    long currentPoint = ServerHandler.getInstance().getCurrentPoint();
+                    int range = ServerHandler.getInstance().getCurrentRange();
+                    dos.writeLong(currentPoint);
+                    dos.writeInt(range);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
