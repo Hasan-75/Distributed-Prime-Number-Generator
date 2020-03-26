@@ -2,9 +2,7 @@ package com.hasan.client;
 
 import com.hasan.Utils;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -17,6 +15,8 @@ public class PrimeClientSocket extends Socket {
     private int serverPort;
     private DataInputStream dis;
     private DataOutputStream dos;
+    private File file;
+    private long startPoint, endPoint;
 
     public PrimeClientSocket(String host, int port) throws IOException {
         super(host, port);
@@ -36,41 +36,78 @@ public class PrimeClientSocket extends Socket {
     }
 
     private void getNumbers() throws IOException { //Get the starting number from which this client will start checking
-        final long startPoint = dis.readLong();
+        startPoint = dis.readLong();
         int range = dis.readInt();
-        final long endPoint = startPoint+range;
+        endPoint = startPoint+range;
 
 
         new Thread(() -> {
-            long tempSP = startPoint;
-            for(;tempSP<=endPoint; tempSP+=2){
-                if(Utils.isPrime(tempSP)){
-                    System.out.println(sid+ "  " + selfIp+"  "+tempSP+"  Prime");
-                }
-                else
-                    System.out.println(sid+ "  " + selfIp+"  "+tempSP+"  Not Prime");
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
+            file = new File(Utils.CLIENT_PRIME_FILE_DIR + getPrimeStorageFileName());
+            if(file.exists())
+                file.delete();
             try {
+                if (!file.getParentFile().exists()){
+                    file.getParentFile().mkdir();
+                }
+                if(!file.exists()) {
+                    file.createNewFile();
+                }
+                FileWriter fileWriter = new FileWriter(file);
+                BufferedWriter bw = new BufferedWriter(fileWriter);
+
+                long tempSP = startPoint;
+                for(;tempSP<=endPoint; tempSP+=2){
+                    if(Utils.isPrime(tempSP)){
+                        System.out.println(sid+ "  " + selfIp+"  "+tempSP+"  Prime");
+                        bw.write(String.valueOf(tempSP));
+                        bw.newLine();
+                        Thread.sleep(100);
+                    }
+                }
+                bw.close();
+                fileWriter.close();
+                System.out.println(file.getAbsolutePath());
                 sayDone();
             } catch (IOException e) {
+                e.printStackTrace();
+
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }).start();
 
     }
 
+    private String getPrimeStorageFileName() {
+        return startPoint + " - " + endPoint + ".txt";
+    }
+
+
     /*Tell the server that,
     this client has finished checking the numbers given previously
      and is ready for new set of numbers*/
     private void sayDone() throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(file);
+        byte[] bytes = fileInputStream.readAllBytes();
+        fileInputStream.close();
+        System.out.println(bytes.length);
         dos.writeUTF(Utils.DONE_MSG);
+        //System.out.println("Client: Sent done...");
+        dos.writeUTF(getPrimeStorageFileName());
+        dos.writeInt(bytes.length);
+        //System.out.println("Client: Sent filename...");
+        String received = dis.readUTF();
+        //System.out.println("Client: got response... "+received);
+        if(received.equals(Utils.ASK_FOR_FILE_MSG)) {
+            //System.out.println("Client: sending file.........");
+            dos.write(bytes);
+        }
+        file.delete();
         sayReady();
+    }
+
+    private void sayBye() throws IOException {
+        dos.writeUTF(Utils.BYE_MSG);
     }
 
     /*This method is for testing purpose*/
@@ -81,13 +118,11 @@ public class PrimeClientSocket extends Socket {
             while (convLength-->0){
                 try {
                     dos.writeUTF(messages[Utils.getRandomNumber(messages.length-1, 0)]);
-                    Thread.sleep(Utils.getRandomNumber(5, 2)*1000);
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
     }
+
 }

@@ -11,7 +11,7 @@ import java.util.List;
 public class ServerHandler{
     private List<ClientHandler> clientList;
     private long currentPoint = 3;
-    private int range = 1000000;
+    private int range = 1000;
     private static ServerHandler instance;
 
     private ServerHandler(){
