@@ -65,7 +65,7 @@ public class PrimeClientSocket extends Socket {
                         System.out.println(sid+ "  " + selfIp+"  "+tempSP+"  Prime");
                         bw.write(String.valueOf(tempSP));
                         bw.newLine();
-                        Thread.sleep(20);
+                        //Thread.sleep(20);
                     }
                 }
                 bw.close();
