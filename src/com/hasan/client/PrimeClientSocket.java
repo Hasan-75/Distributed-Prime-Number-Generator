@@ -56,12 +56,16 @@ public class PrimeClientSocket extends Socket {
                 BufferedWriter bw = new BufferedWriter(fileWriter);
 
                 long tempSP = startPoint;
+                if(tempSP==3) {
+                    bw.write("2");
+                    bw.newLine();
+                }
                 for(;tempSP<=endPoint; tempSP+=2){
                     if(Utils.isPrime(tempSP)){
                         System.out.println(sid+ "  " + selfIp+"  "+tempSP+"  Prime");
                         bw.write(String.valueOf(tempSP));
                         bw.newLine();
-                        Thread.sleep(100);
+                        Thread.sleep(20);
                     }
                 }
                 bw.close();

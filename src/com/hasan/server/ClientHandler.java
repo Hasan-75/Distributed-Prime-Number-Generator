@@ -70,6 +70,9 @@ public class ClientHandler implements Runnable{
                     //System.out.println("Server: got file. size " + bytes.length);
                     FileOutputStream fileOutputStream = new FileOutputStream(generatedFile);
                     fileOutputStream.write(bytes);
+                    if(ServerHandler.getInstance().getPrimeListUpdater() != null){
+                        ServerHandler.getInstance().getPrimeListUpdater().updateList(generatedFile);
+                    }
                     file.delete();
                 }
             } catch (SocketException s){
@@ -78,6 +81,7 @@ public class ClientHandler implements Runnable{
                 if(!iFile.getParentFile().exists())
                     iFile.getParentFile().mkdir();
                 file.renameTo(iFile);
+                ServerHandler.getInstance().removeClient(this);
                 break;
             } catch (IOException e) {
                 e.printStackTrace();
